@@ -13,6 +13,7 @@ using namespace Rx;
 
 namespace std
 {
+    // Pretty-printing
     ostream &operator<<(ostream &os, const State &st);
     ostream &operator<<(ostream &os, Quant q)
     {
@@ -34,7 +35,6 @@ namespace std
     }
     ostream &operator<<(ostream &os, const State &st)
     {
-
         if (auto ch = std::get_if<char>(&st.details))
         {
             os << "Element{ '" << *ch << "', " << st.quant << " }";
@@ -52,49 +52,49 @@ namespace std
 
 } // namespace std
 
-TEST_CASE("single char")
+TEST_CASE("parse single char", "[parse]")
 {
     auto result = parse("a");
     REQUIRE(result == vector<State>{State::Element('a')});
 }
 
-TEST_CASE("escaping")
+TEST_CASE("parse escaping", "[parse]")
 {
     auto result = parse("\\*\\?\\+");
     REQUIRE(result == vector<State>{State::Element('*'), State::Element('?'), State::Element('+')});
 }
 
-TEST_CASE("sequence")
+TEST_CASE("parse sequence", "[parse]")
 {
     auto result = parse("abc");
     REQUIRE(result == vector<State>{State::Element('a'), State::Element('b'), State::Element('c')});
 }
 
-TEST_CASE("wildcard")
+TEST_CASE("parse wildcard", "[parse]")
 {
     auto result = parse(".");
     REQUIRE(result == vector<State>{State::Wildcard()});
 }
 
-TEST_CASE("zero or one")
+TEST_CASE("parse zero or one", "[parse]")
 {
     auto result = parse("ab?c");
     REQUIRE(result == vector<State>{State::Element('a'), State::Element('b', Quant::ZeroOrOne), State::Element('c')});
 }
 
-TEST_CASE("zero or more")
+TEST_CASE("parse zero or more", "[parse]")
 {
     auto result = parse("ab*c");
     REQUIRE(result == vector<State>{State::Element('a'), State::Element('b', Quant::ZeroOrMore), State::Element('c')});
 }
 
-TEST_CASE("one or more")
+TEST_CASE("parse one or more", "[parse]")
 {
     auto result = parse("ab+c");
     REQUIRE(result == vector<State>{State::Element('a'), State::Element('b'), State::Element('b', Quant::ZeroOrMore), State::Element('c')});
 }
 
-TEST_CASE("group")
+TEST_CASE("parse group", "[parse]")
 {
     auto result = parse("(abc)");
     REQUIRE(result == vector<State>{

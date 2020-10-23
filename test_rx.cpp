@@ -54,52 +54,52 @@ namespace std
 
 TEST_CASE("single char")
 {
-    auto result = CompiledRe::parse("a");
-    REQUIRE(result.states == vector<State>{State::Element('a')});
+    auto result = parse("a");
+    REQUIRE(result == vector<State>{State::Element('a')});
 }
 
 TEST_CASE("escaping")
 {
-    auto result = CompiledRe::parse("\\*\\?\\+");
-    REQUIRE(result.states == vector<State>{State::Element('*'), State::Element('?'), State::Element('+')});
+    auto result = parse("\\*\\?\\+");
+    REQUIRE(result == vector<State>{State::Element('*'), State::Element('?'), State::Element('+')});
 }
 
 TEST_CASE("sequence")
 {
-    auto result = CompiledRe::parse("abc");
-    REQUIRE(result.states == vector<State>{State::Element('a'), State::Element('b'), State::Element('c')});
+    auto result = parse("abc");
+    REQUIRE(result == vector<State>{State::Element('a'), State::Element('b'), State::Element('c')});
 }
 
 TEST_CASE("wildcard")
 {
-    auto result = CompiledRe::parse(".");
-    REQUIRE(result.states == vector<State>{State::Wildcard()});
+    auto result = parse(".");
+    REQUIRE(result == vector<State>{State::Wildcard()});
 }
 
 TEST_CASE("zero or one")
 {
-    auto result = CompiledRe::parse("ab?c");
-    REQUIRE(result.states == vector<State>{State::Element('a'), State::Element('b', Quant::ZeroOrOne), State::Element('c')});
+    auto result = parse("ab?c");
+    REQUIRE(result == vector<State>{State::Element('a'), State::Element('b', Quant::ZeroOrOne), State::Element('c')});
 }
 
 TEST_CASE("zero or more")
 {
-    auto result = CompiledRe::parse("ab*c");
-    REQUIRE(result.states == vector<State>{State::Element('a'), State::Element('b', Quant::ZeroOrMore), State::Element('c')});
+    auto result = parse("ab*c");
+    REQUIRE(result == vector<State>{State::Element('a'), State::Element('b', Quant::ZeroOrMore), State::Element('c')});
 }
 
 TEST_CASE("one or more")
 {
-    auto result = CompiledRe::parse("ab+c");
-    REQUIRE(result.states == vector<State>{State::Element('a'), State::Element('b'), State::Element('b', Quant::ZeroOrMore), State::Element('c')});
+    auto result = parse("ab+c");
+    REQUIRE(result == vector<State>{State::Element('a'), State::Element('b'), State::Element('b', Quant::ZeroOrMore), State::Element('c')});
 }
 
 TEST_CASE("group")
 {
-    auto result = CompiledRe::parse("(abc)");
-    REQUIRE(result.states == vector<State>{
-                                 State::Group(vector<State>{
-                                     State::Element('a'),
-                                     State::Element('b'),
-                                     State::Element('c')})});
+    auto result = parse("(abc)");
+    REQUIRE(result == vector<State>{
+                          State::Group(vector<State>{
+                              State::Element('a'),
+                              State::Element('b'),
+                              State::Element('c')})});
 }

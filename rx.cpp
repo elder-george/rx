@@ -8,7 +8,7 @@ namespace Rx
     bool operator==(const State& a, const State& b){
         return a.quant == b.quant && a.details == b.details;
     }
-    CompiledRe CompiledRe::parse(const std::string_view &re)
+    std::vector<State> parse(const std::string_view &re)
     {
         std::vector<std::vector<State>> stack;
         stack.reserve(re.size());

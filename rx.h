@@ -35,10 +35,5 @@ namespace Rx
 
     bool operator==(const State &a, const State &b);
 
-    struct CompiledRe
-    {
-        static CompiledRe parse(const std::string_view &re);
-        std::vector<State> states;
-    };
-
+    std::vector<State> parse(const std::string_view &re);
 } // namespace Rx

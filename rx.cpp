@@ -1,11 +1,13 @@
 #include "rx.h"
 
 #include <stdexcept>
+#include <algorithm>
 
 namespace Rx
 {
 
-    bool operator==(const State& a, const State& b){
+    bool operator==(const State &a, const State &b)
+    {
         return a.quant == b.quant && a.details == b.details;
     }
     std::vector<State> parse(const std::string_view &re)
@@ -84,5 +86,103 @@ namespace Rx
             throw std::logic_error("Unmatched groups");
         }
         return {stack[0]};
+    }
+
+    struct Matcher
+    {
+        Matcher(const std::vector<State> &states)
+        {
+            statesStack = states;
+            std::reverse(statesStack.begin(), statesStack.end());
+        }
+
+        std::tuple<bool, size_t> match(const std::string_view &str)
+        {
+            while (!statesStack.empty())
+            {
+                currentState = std::move(statesStack.back());
+                statesStack.pop_back();
+                switch (currentState.quant)
+                {
+                case Quant::One:
+                {
+                    auto [isMatch, consumed] = matchesStringAt(currentState, str, i);
+                    if (!isMatch)
+                    {
+                        return {false, 0};
+                    }
+                    i += consumed;
+                    continue;
+                }
+                case Quant::ZeroOrOne:
+                {
+                    if (i >= str.size())
+                    {
+                        continue;
+                    }
+                    auto [isMatch, consumed] = matchesStringAt(currentState, str, i);
+                    i += consumed;
+                    continue;
+                }
+                case Quant::ZeroOrMore:
+                    while (true)
+                    {
+                        if (i >= str.size())
+                        {
+                            break;
+                        }
+                        auto [isMatch, consumed] = matchesStringAt(currentState, str, i);
+                        if (!isMatch || consumed == 0)
+                        {
+                            break;
+                        }
+                        i += consumed;
+                    }
+                }
+            }
+            return {true, i};
+        }
+
+        static std::tuple<bool, size_t> matchesStringAt(const State &st, const std::string_view &str, size_t i)
+        {
+            if (i >= str.size())
+            {
+                return {false, 0};
+            }
+
+            if (auto c = std::get_if<char>(&st.details)) // Element
+            {
+                if (*c == str[i])
+                {
+                    return {true, 1};
+                }
+                else
+                {
+                    return {false, 0};
+                }
+            }
+            else if (auto items = std::get_if<std::vector<State>>(&st.details)) // Group
+            {
+                return Matcher{*items}.match(str.substr(i));
+            }
+            else // Wildcard
+            {
+                return {true, 1}; // Wildcard always matches
+            }
+        }
+
+        std::vector<State> statesStack{};
+        State currentState{};
+        size_t i{};
+    };
+
+    std::optional<size_t> match(const std::vector<State> &states, const std::string_view &str)
+    {
+        Matcher m{states};
+        auto [isMatch, consumed] = m.match(str);
+        if (isMatch)
+            return std::optional(consumed);
+        else
+            return {};
     }
 } // namespace Rx

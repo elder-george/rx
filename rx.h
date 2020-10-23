@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <variant>
+#include <optional>
 
 namespace Rx
 {
@@ -36,4 +37,6 @@ namespace Rx
     bool operator==(const State &a, const State &b);
 
     std::vector<State> parse(const std::string_view &re);
+
+    std::optional<size_t> match(const std::vector<State>& states, const std::string_view &str);
 } // namespace Rx

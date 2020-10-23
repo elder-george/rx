@@ -50,6 +50,19 @@ namespace std
         return os;
     }
 
+    template <typename T>
+    ostream &operator<<(ostream &os, const std::optional<T> &opt)
+    {
+        if (opt)
+        {
+            os << *opt;
+        }
+        else
+        {
+            os << "none";
+        }
+        return os;
+    }
 } // namespace std
 
 TEST_CASE("parse single char", "[parse]")
@@ -103,3 +116,54 @@ TEST_CASE("parse group", "[parse]")
                               State::Element('b'),
                               State::Element('c')})});
 }
+
+TEST_CASE("match empty string", "[match]")
+{
+    REQUIRE(match(parse(""), "abc") == std::optional{0});
+    REQUIRE(match(parse(""), "") == std::optional{0});
+}
+
+TEST_CASE("match single char", "[match]")
+{
+    REQUIRE(match(parse("a"), "abc") == std::optional{1});
+    REQUIRE(match(parse("a"), "bc") == std::nullopt);
+    REQUIRE(match(parse("a"), "") == std::nullopt);
+}
+
+TEST_CASE("match wildcard", "[match]")
+{
+    REQUIRE(match(parse(".."), "abc") == std::optional{2});
+    REQUIRE(match(parse(".."), "") == std::nullopt);
+}
+
+TEST_CASE("match sequence", "[match]")
+{
+    REQUIRE(match(parse("abc"), "abc") == std::optional{3});
+    REQUIRE(match(parse("abc"), "bca") == std::nullopt);
+}
+
+TEST_CASE("match *", "[match]")
+{
+    REQUIRE(match(parse("ab*c"), "abbbbbc") == std::optional{7});
+    REQUIRE(match(parse("ab*c"), "ac") == std::optional{2});
+}
+
+TEST_CASE("match +", "[match]")
+{
+    REQUIRE(match(parse("ab+c"), "abbbbbc") == std::optional{7});
+    REQUIRE(match(parse("ab+c"), "ac") == std::nullopt);
+}
+
+TEST_CASE("match groups", "[match]")
+{
+    REQUIRE(match(parse("(abc)"), "abc") == std::optional{3});
+    REQUIRE(match(parse("(abc)?"), "abc") == std::optional{3});
+    REQUIRE(match(parse("(abc)?"), "") == std::optional{0});
+    REQUIRE(match(parse("(abc)*"), "abcabc") == std::optional{6});
+}
+
+// TEST_CASE("has backtacking", "[match]")
+// {
+//     REQUIRE(match(parse("ac*c"), "acc") == std::optional{7});
+//     REQUIRE(match(parse("ac*c"), "ac") == std::optional{2});
+// }

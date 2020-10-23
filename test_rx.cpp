@@ -42,18 +42,58 @@ namespace std
         else if (auto group = std::get_if<std::vector<State>>(&st.details))
         {
             os << "Group{ " << *group << ", " << st.quant << " }";
-        } else {
-            os << "Wildcard{ "<<st.quant<<" }";
+        }
+        else
+        {
+            os << "Wildcard{ " << st.quant << " }";
         }
         return os;
     }
 
 } // namespace std
 
-bool operator==(const State &, const State &) { return true; }
-
 TEST_CASE("single char")
 {
     auto result = CompiledRe::parse("a");
     REQUIRE(result.states == vector<State>{State::Element('a')});
+}
+
+TEST_CASE("sequence")
+{
+    auto result = CompiledRe::parse("abc");
+    REQUIRE(result.states == vector<State>{State::Element('a'), State::Element('b'), State::Element('c')});
+}
+
+TEST_CASE("wildcard")
+{
+    auto result = CompiledRe::parse(".");
+    REQUIRE(result.states == vector<State>{State::Wildcard()});
+}
+
+TEST_CASE("zero or one")
+{
+    auto result = CompiledRe::parse("ab?c");
+    REQUIRE(result.states == vector<State>{State::Element('a'), State::Element('b', Quant::ZeroOrOne), State::Element('c')});
+}
+
+TEST_CASE("zero or more")
+{
+    auto result = CompiledRe::parse("ab*c");
+    REQUIRE(result.states == vector<State>{State::Element('a'), State::Element('b', Quant::ZeroOrMore), State::Element('c')});
+}
+
+TEST_CASE("one or more")
+{
+    auto result = CompiledRe::parse("ab+c");
+    REQUIRE(result.states == vector<State>{State::Element('a'), State::Element('b'), State::Element('b', Quant::ZeroOrMore), State::Element('c')});
+}
+
+TEST_CASE("group")
+{
+    auto result = CompiledRe::parse("(abc)");
+    REQUIRE(result.states == vector<State>{
+                                 State::Group(vector<State>{
+                                     State::Element('a'),
+                                     State::Element('b'),
+                                     State::Element('c')})});
 }

@@ -14,26 +14,26 @@ namespace Rx
 
     struct State
     {
-        static State Wildcard()
+        static State Wildcard(Quant q = Quant::One)
         {
-            return {Quant::One,  false};
+            return {q, false};
         }
 
-        static State Element(char c)
+        static State Element(char c, Quant q = Quant::One)
         {
-            return {Quant::One, c};
+            return {q, c};
         }
 
-        static State Group(std::vector<State>&& items)
+        static State Group(std::vector<State> &&items, Quant q = Quant::One)
         {
-            return {Quant::One,items };
+            return {q, items};
         }
 
         Quant quant;
         std::variant<bool, char, std::vector<State>> details;
     };
 
-    bool operator==(const State& a, const State& b);
+    bool operator==(const State &a, const State &b);
 
     struct CompiledRe
     {

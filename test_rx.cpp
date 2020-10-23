@@ -58,6 +58,12 @@ TEST_CASE("single char")
     REQUIRE(result.states == vector<State>{State::Element('a')});
 }
 
+TEST_CASE("escaping")
+{
+    auto result = CompiledRe::parse("\\*\\?\\+");
+    REQUIRE(result.states == vector<State>{State::Element('*'), State::Element('?'), State::Element('+')});
+}
+
 TEST_CASE("sequence")
 {
     auto result = CompiledRe::parse("abc");

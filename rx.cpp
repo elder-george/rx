@@ -26,6 +26,7 @@ namespace Rx
                     throw std::logic_error("bad escape character");
                 }
                 stack.back().push_back(State::Element(re[i + 1]));
+                ++i;
                 break;
             case '(':
                 stack.push_back({});

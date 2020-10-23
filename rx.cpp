@@ -88,6 +88,13 @@ namespace Rx
         return {stack[0]};
     }
 
+    struct BacktrackState
+    {
+        bool isBacktrackable;
+        State state;
+        std::vector<size_t> consumptions;
+    };
+
     struct Matcher
     {
         Matcher(const std::vector<State> &states)
@@ -109,8 +116,15 @@ namespace Rx
                     auto [isMatch, consumed] = matchesStringAt(currentState, str, i);
                     if (!isMatch)
                     {
-                        return {false, 0};
+                        auto indexBeforeBacktracking = i;
+                        if (!backtrack())
+                        {
+                            return {false, indexBeforeBacktracking};
+                        }
+                        statesStack.push_back(currentState);
+                        continue;
                     }
+                    backtrackStack.push_back({false, currentState, {consumed}});
                     i += consumed;
                     continue;
                 }
@@ -118,29 +132,87 @@ namespace Rx
                 {
                     if (i >= str.size())
                     {
+                        backtrackStack.push_back({false, currentState, {0}});
                         continue;
                     }
                     auto [isMatch, consumed] = matchesStringAt(currentState, str, i);
                     i += consumed;
+                    backtrackStack.push_back({isMatch && consumed > 0, currentState, {consumed}});
                     continue;
                 }
                 case Quant::ZeroOrMore:
+                    BacktrackState btState{true, currentState, {}};
                     while (true)
                     {
                         if (i >= str.size())
                         {
+                            if (btState.consumptions.size() == 0)
+                            {
+                                btState.isBacktrackable = false;
+                                btState.consumptions.push_back(0);
+                            }
+                            backtrackStack.push_back(btState);
                             break;
                         }
                         auto [isMatch, consumed] = matchesStringAt(currentState, str, i);
                         if (!isMatch || consumed == 0)
                         {
+                            if (btState.consumptions.size() == 0)
+                            {
+                                btState.isBacktrackable = false;
+                                btState.consumptions.push_back(0);
+                            }
+                            backtrackStack.push_back(btState);
                             break;
                         }
+                        btState.consumptions.push_back(consumed);
                         i += consumed;
                     }
                 }
             }
             return {true, i};
+        }
+
+        bool backtrack()
+        {
+            statesStack.push_back(currentState);
+            bool couldBacktrack = false;
+
+            while (backtrackStack.size() > 0)
+            {
+                auto btState = backtrackStack.back();
+                backtrackStack.pop_back();
+
+                if (btState.isBacktrackable)
+                {
+                    if (btState.consumptions.size() == 0)
+                    {
+                        statesStack.push_back(btState.state);
+                        continue;
+                    }
+                    else
+                    {
+                        auto n = btState.consumptions.back();
+                        i -= n;
+                        couldBacktrack = true;
+                        break;
+                    }
+                }
+                else
+                {
+                    statesStack.push_back(btState.state);
+                    for (auto n : btState.consumptions)
+                    {
+                        i -= n;
+                    }
+                }
+            }
+            if (couldBacktrack)
+            {
+                currentState = statesStack.back();
+                statesStack.pop_back();
+            }
+            return couldBacktrack;
         }
 
         static std::tuple<bool, size_t> matchesStringAt(const State &st, const std::string_view &str, size_t i)
@@ -174,6 +246,7 @@ namespace Rx
         std::vector<State> statesStack{};
         State currentState{};
         size_t i{};
+        std::vector<BacktrackState> backtrackStack{};
     };
 
     std::optional<size_t> match(const std::vector<State> &states, const std::string_view &str)

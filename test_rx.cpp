@@ -162,8 +162,8 @@ TEST_CASE("match groups", "[match]")
     REQUIRE(match(parse("(abc)*"), "abcabc") == std::optional{6});
 }
 
-// TEST_CASE("has backtacking", "[match]")
-// {
-//     REQUIRE(match(parse("ac*c"), "acc") == std::optional{7});
-//     REQUIRE(match(parse("ac*c"), "ac") == std::optional{2});
-// }
+TEST_CASE("has backtracking", "[match]")
+{
+    REQUIRE(match(parse("ac*c"), "acc") == std::optional{3});
+    REQUIRE(match(parse("ac*c"), "ac") == std::optional{2});
+}
